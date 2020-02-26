@@ -8,7 +8,7 @@ const prod = 'https://www.oreilly.com/member/login';
 const prodGcp = 'https://grootfrontend.platform-prod.gcp.oreilly.com/member/login';
 
 const currentUrl = prod;
-const maxIterations = 10;
+const maxIterations = 50;
 
 (async () => {
   const errors = [];
@@ -16,9 +16,6 @@ const maxIterations = 10;
 
   const page = await browser.newPage();
   await page.setCacheEnabled(false);
-
-  log.info('Initial page load.', currentUrl);
-  await page.goto(currentUrl);
 
   // page.on('error', err => {
   //   console.log('ERROR', err);
@@ -45,12 +42,25 @@ const maxIterations = 10;
     }
   });
 
+  log.info('Initial page load.', currentUrl);
+  try {
+    await page.goto(currentUrl);
+    await page.waitForSelector('h1', { timeout: 15000 });
+    await sleep(2000);
+  } catch (e) {
+    errors.push({
+      url: currentUrl,
+      statusCode: 0,
+      errorText: e.message
+    });
+  }
+
   let i = 0;
   while (++i < maxIterations) {
     try {
-      await page.waitForSelector('h1', { timeout: 15000 });
       log.info('Page reload:', i);
       await page.reload({ waitUntil: 'networkidle0' });
+      await page.waitForSelector('h1', { timeout: 15000 });
       await sleep(2000);
     } catch (e) {
       errors.push({
